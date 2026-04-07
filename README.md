@@ -79,6 +79,14 @@ cloudflared tunnel --url http://localhost:8080
 
 会输出一个 `https://xxx.trycloudflare.com` 地址，分享给朋友即可使用。
 
+## 自定义角色
+
+编辑 `backend/config.py` 中的 `SYSTEM_PROMPT` 可以自定义角色的性格、说话风格和背景设定。修改后重启服务即可生效。
+
+你也可以在 `config.py` 中更换 `VOICE_ID` 来使用不同的语音。
+
+> 注意：运行本项目需要自己申请 [阿里云 DashScope API Key](https://dashscope.console.aliyun.com/)，填入 `backend/.env` 文件中。该文件不会被上传到 GitHub。
+
 ## 项目结构
 
 ```
