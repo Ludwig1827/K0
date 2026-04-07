@@ -1,5 +1,9 @@
 # 可霖の咖啡店
 
+<p align="center">
+  <img src="frontend/kelin.png" alt="可霖" height="400">
+</p>
+
 一个实时语音对话的 AI 虚拟角色应用。可霖是一位来自魔法世界的治愈系少女，在她的咖啡店里倾听你的烦恼。
 
 ## 功能
