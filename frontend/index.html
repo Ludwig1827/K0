@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>可霼の咏啊店</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: linear-gradient(135deg, #2d1b4e 0%, #1a1a2e 50%, #16213e 100%);
+    color: #e0d6eb;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  .title {
+    font-size: 1.4rem;
+    color: #d4a8e0;
+    margin-bottom: 0.5rem;
+    letter-spacing: 0.1em;
+  }
+
+  .subtitle {
+    font-size: 0.85rem;
+    color: #8a7a9a;
+    margin-bottom: 2rem;
+  }
+
+  .call-btn {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    position: relative;
+    z-index: 1;
+  }
+
+  .call-btn.idle {
+    background: linear-gradient(135deg, #e8a0bf, #c77dba);
+    color: white;
+    box-shadow: 0 4px 30px rgba(200, 125, 186, 0.4);
+  }
+
+  .call-btn.idle:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 40px rgba(200, 125, 186, 0.6);
+  }
+
+  .call-btn.active {
+    background: linear-gradient(135deg, #e05a5a, #c0392b);
+    color: white;
+    box-shadow: 0 4px 30px rgba(192, 57, 43, 0.4);
+  }
+
+  .call-btn.active:hover {
+    transform: scale(1.05);
+  }
+
+  /* Pulse animation when active */
+  .pulse-ring {
+    position: absolute;
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    border: 2px solid rgba(200, 125, 186, 0.3);
+    animation: pulse 2s ease-out infinite;
+    pointer-events: none;
+    display: none;
+  }
+
+  .active-state .pulse-ring {
+    display: block;
+    border-color: rgba(224, 90, 90, 0.3);
+  }
+
+  @keyframes pulse {
+    0% { transform: scale(1); opacity: 1; }
+    100% { transform: scale(2); opacity: 0; }
+  }
+
+  .btn-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 1.5rem 0;
+  }
+
+  .status {
+    font-size: 0.9rem;
+    color: #a89abc;
+    min-height: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .transcript-area {
+    width: 90%;
+    max-width: 500px;
+    max-height: 40vh;
+    overflow-y: auto;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+
+  .msg {
+    padding: 0.6rem 1rem;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    max-width: 85%;
+    word-wrap: break-word;
+  }
+
+  .msg.user {
+    background: rgba(200, 125, 186, 0.15);
+    color: #d4a8e0;
+    align-self: flex-end;
+    border-bottom-right-radius: 4px;
+  }
+
+  .msg.assistant {
+    background: rgba(100, 100, 160, 0.15);
+    color: #b8c0e0;
+    align-self: flex-start;
+    border-bottom-left-radius: 4px;
+  }
+
+  .error-msg {
+    color: #e05a5a;
+    font-size: 0.85rem;
+    text-align: center;
+    margin-top: 1rem;
+  }
+</style>
+</head>
+<body>
+
+<div class="title">可霼の咏啊店</div>
+<div class="subtitle">来杯解忧咏啊吧</div>
+
+<div class="status" id="status"></div>
+
+<div class="btn-container" id="btnContainer">
+  <div class="pulse-ring"></div>
+  <button class="call-btn idle" id="callBtn" onclick="toggleCall()">拨号</button>
+</div>
+
+<div class="transcript-area" id="transcripts"></div>
+<div class="error-msg" id="errorMsg"></div>
+
+<script>
+const WS_URL = `ws://${location.host}/ws`;
+
+let ws = null;
+let audioCtx = null;
+let workletNode = null;
+let mediaStream = null;
+let isActive = false;
+let playbackCtx = null;
+let nextPlayTime = 0;
+
+const btn = document.getElementById("callBtn");
+const btnContainer = document.getElementById("btnContainer");
+const statusEl = document.getElementById("status");
+const transcriptsEl = document.getElementById("transcripts");
+const errorEl = document.getElementById("errorMsg");
+
+// --- Energy-based VAD ---
+let wasUserSpeaking = false;
+const VAD_THRESHOLD = 0.01; // RMS threshold
+const VAD_FRAMES_NEEDED = 3;
+let vadFrameCount = 0;
+
+function checkVAD(pcmBuffer) {
+  // pcmBuffer is ArrayBuffer of Int16
+  const samples = new Int16Array(pcmBuffer);
+  let sum = 0;
+  for (let i = 0; i < samples.length; i++) {
+    const normalized = samples[i] / 32768;
+    sum += normalized * normalized;
+  }
+  const rms = Math.sqrt(sum / samples.length);
+
+  if (rms > VAD_THRESHOLD) {
+    vadFrameCount++;
+    if (vadFrameCount >= VAD_FRAMES_NEEDED && !wasUserSpeaking) {
+      wasUserSpeaking = true;
+      // User started speaking — send interrupt if AI is responding
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: "interrupt" }));
+      }
+    }
+  } else {
+    vadFrameCount = 0;
+    wasUserSpeaking = false;
+  }
+}
+
+async function toggleCall() {
+  if (isActive) {
+    stopCall();
+  } else {
+    await startCall();
+  }
+}
+
+async function startCall() {
+  errorEl.textContent = "";
+  transcriptsEl.innerHTML = "";
+
+  try {
+    mediaStream = await navigator.mediaDevices.getUserMedia({
+      audio: { sampleRate: { ideal: 48000 }, channelCount: 1, echoCancellation: true, noiseSuppression: true }
+    });
+  } catch {
+    errorEl.textContent = "请允许麦克风权限后重试";
+    return;
+  }
+
+  // WebSocket
+  ws = new WebSocket(WS_URL);
+  ws.binaryType = "arraybuffer";
+
+  ws.onopen = async () => {
+    ws.send(JSON.stringify({ type: "start" }));
+
+    // Audio capture
+    audioCtx = new AudioContext({ sampleRate: 48000 });
+    await audioCtx.audioWorklet.addModule("/audio-processor.js");
+    const source = audioCtx.createMediaStreamSource(mediaStream);
+    workletNode = new AudioWorkletNode(audioCtx, "audio-capture-processor");
+    workletNode.port.onmessage = (e) => {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        checkVAD(e.data);
+        ws.send(new Uint8Array(e.data));
+      }
+    };
+    source.connect(workletNode);
+    workletNode.connect(audioCtx.destination); // needed to keep processor alive
+
+    // Playback context
+    playbackCtx = new AudioContext({ sampleRate: 16000 });
+    nextPlayTime = 0;
+  };
+
+  ws.onmessage = (e) => {
+    if (e.data instanceof ArrayBuffer) {
+      playAudioChunk(e.data);
+    } else {
+      const msg = JSON.parse(e.data);
+      if (msg.type === "transcript") {
+        addTranscript(msg.role, msg.text);
+      } else if (msg.type === "status") {
+        updateStatus(msg.state);
+      } else if (msg.type === "interrupt_ack") {
+        // Reset playback schedule so next response plays immediately
+        nextPlayTime = 0;
+      }
+    }
+  };
+
+  ws.onclose = () => {
+    if (isActive) {
+      // Auto-reconnect with exponential backoff
+      reconnect();
+    }
+  };
+
+  ws.onerror = () => {
+    errorEl.textContent = "连接失败，正在重试...";
+  };
+
+  isActive = true;
+  btn.textContent = "挂断";
+  btn.className = "call-btn active";
+  btnContainer.classList.add("active-state");
+}
+
+function stopCall() {
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    ws.send(JSON.stringify({ type: "stop" }));
+    ws.close();
+  }
+  ws = null;
+
+  if (workletNode) { workletNode.disconnect(); workletNode = null; }
+  if (audioCtx) { audioCtx.close(); audioCtx = null; }
+  if (playbackCtx) { playbackCtx.close(); playbackCtx = null; }
+  if (mediaStream) { mediaStream.getTracks().forEach(t => t.stop()); mediaStream = null; }
+
+  isActive = false;
+  wasUserSpeaking = false;
+  vadFrameCount = 0;
+  btn.textContent = "拨号";
+  btn.className = "call-btn idle";
+  btnContainer.classList.remove("active-state");
+  statusEl.textContent = "";
+}
+
+function playAudioChunk(arrayBuffer) {
+  if (!playbackCtx) return;
+  const int16 = new Int16Array(arrayBuffer);
+  const float32 = new Float32Array(int16.length);
+  for (let i = 0; i < int16.length; i++) {
+    float32[i] = int16[i] / 32768;
+  }
+
+  const buffer = playbackCtx.createBuffer(1, float32.length, 16000);
+  buffer.getChannelData(0).set(float32);
+
+  const source = playbackCtx.createBufferSource();
+  source.buffer = buffer;
+  source.connect(playbackCtx.destination);
+
+  const now = playbackCtx.currentTime;
+  const startTime = Math.max(now, nextPlayTime);
+  source.start(startTime);
+  nextPlayTime = startTime + buffer.duration;
+}
+
+function addTranscript(role, text) {
+  const div = document.createElement("div");
+  div.className = `msg ${role}`;
+  div.textContent = text;
+  transcriptsEl.appendChild(div);
+  transcriptsEl.scrollTop = transcriptsEl.scrollHeight;
+}
+
+let reconnectAttempts = 0;
+function reconnect() {
+  const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 10000);
+  reconnectAttempts++;
+  statusEl.textContent = "连接断开，正在重连...";
+  setTimeout(async () => {
+    try {
+      await startCall();
+      reconnectAttempts = 0;
+    } catch {
+      reconnect();
+    }
+  }, delay);
+}
+
+function updateStatus(state) {
+  const labels = {
+    listening: "可霼在听...",
+    thinking: "可霼在想...",
+    speaking: "可霼在说...",
+  };
+  statusEl.textContent = labels[state] || "";
+}
+</script>
+</body>
+</html>
