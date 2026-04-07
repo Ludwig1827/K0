@@ -3,365 +3,904 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>可霼の咏啊店</title>
+<title>可霖の咖啡店</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&family=Zen+Maru+Gothic:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg-deep: #0c0814;
+    --accent-pink: #e8a0bf;
+    --accent-rose: #c77dba;
+    --accent-lavender: #b8a0d4;
+    --accent-warm: #d4a076;
+    --glass-bg: rgba(18, 12, 32, 0.6);
+    --glass-border: rgba(200, 125, 186, 0.12);
+    --text-primary: #ede6f5;
+    --text-muted: #8a7a9a;
+    --text-soft: #c0b4d4;
+    --msg-user-bg: rgba(200,125,186,0.1);
+    --msg-user-border: rgba(200,125,186,0.12);
+    --msg-user-color: #f0c0d8;
+    --msg-assistant-bg: rgba(120,100,180,0.09);
+    --msg-assistant-border: rgba(120,100,180,0.1);
+    --msg-assistant-color: #d4c8ea;
+    --deco-color: rgba(200, 125, 186, 0.04);
+    --deco-border: rgba(200,125,186,0.06);
+    --deco-diamond: rgba(200,125,186,0.15);
+    --grid-color: rgba(200,125,186,0.5);
+    --grid-opacity: 0.03;
+    --gradient-1: rgba(160, 80, 140, 0.14);
+    --gradient-2: rgba(90, 70, 150, 0.12);
+    --gradient-3: rgba(212, 160, 118, 0.06);
+    --char-glow: rgba(200,125,186,0.12);
+    --char-glow2: rgba(120,80,160,0.05);
+    --char-quote-color: rgba(200,125,186,0.25);
+    --char-shadow: rgba(200,125,186,0.1);
+    --footer-color: rgba(138,122,154,0.4);
+    --scroll-thumb: rgba(200,125,186,0.18);
+    --error-color: #e06a6a;
+    --font-display: 'Noto Serif SC', serif;
+    --font-body: 'Zen Maru Gothic', sans-serif;
+  }
+
+  /* === Light theme === */
+  [data-theme="light"] {
+    --bg-deep: #f5f0f8;
+    --glass-bg: rgba(255, 255, 255, 0.7);
+    --glass-border: rgba(200, 125, 186, 0.18);
+    --text-primary: #2d2440;
+    --text-muted: #8a7a9a;
+    --text-soft: #5a4d6e;
+    --msg-user-bg: rgba(200,125,186,0.12);
+    --msg-user-border: rgba(200,125,186,0.18);
+    --msg-user-color: #9a4878;
+    --msg-assistant-bg: rgba(120,100,180,0.08);
+    --msg-assistant-border: rgba(120,100,180,0.12);
+    --msg-assistant-color: #3d3460;
+    --deco-color: rgba(200, 125, 186, 0.06);
+    --deco-border: rgba(200,125,186,0.1);
+    --deco-diamond: rgba(200,125,186,0.2);
+    --grid-color: rgba(200,125,186,0.3);
+    --grid-opacity: 0.04;
+    --gradient-1: rgba(232, 160, 191, 0.15);
+    --gradient-2: rgba(184, 160, 212, 0.12);
+    --gradient-3: rgba(212, 160, 118, 0.08);
+    --char-glow: rgba(200,125,186,0.08);
+    --char-glow2: rgba(184,160,212,0.06);
+    --char-quote-color: rgba(160,80,140,0.2);
+    --char-shadow: rgba(100,60,120,0.08);
+    --footer-color: rgba(100,80,120,0.35);
+    --scroll-thumb: rgba(200,125,186,0.25);
+    --error-color: #c0394b;
+  }
 
   body {
-    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
-    background: linear-gradient(135deg, #2d1b4e 0%, #1a1a2e 50%, #16213e 100%);
-    color: #e0d6eb;
+    font-family: var(--font-body);
+    background: var(--bg-deep);
+    color: var(--text-primary);
     height: 100vh;
+    display: flex;
+    overflow: hidden;
+    user-select: none;
+    transition: background 0.4s, color 0.4s;
+  }
+
+  /* === Theme toggle === */
+  .theme-toggle {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    z-index: 100;
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    border: 1px solid var(--glass-border);
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    transition: all 0.3s;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+  }
+  .theme-toggle:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 20px rgba(200,125,186,0.2);
+  }
+
+  /* === Multi-layer background === */
+  .bg-layer {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    transition: opacity 0.4s;
+  }
+  .bg-layer.gradients {
+    background:
+      radial-gradient(ellipse 90% 70% at 15% 85%, var(--gradient-1) 0%, transparent 55%),
+      radial-gradient(ellipse 50% 50% at 80% 15%, var(--gradient-2) 0%, transparent 50%),
+      radial-gradient(ellipse 35% 35% at 50% 60%, var(--gradient-3) 0%, transparent 45%);
+  }
+
+  .bg-layer.grid {
+    opacity: var(--grid-opacity);
+    background-image:
+      linear-gradient(var(--grid-color) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+    background-size: 60px 60px;
+  }
+
+  /* Decorative floating kanji */
+  .deco-text {
+    position: fixed;
+    font-family: var(--font-display);
+    color: var(--deco-color);
+    pointer-events: none;
+    z-index: 1;
+    line-height: 1;
+    transition: color 0.4s;
+  }
+  .deco-text.t1 { font-size: 8rem; top: 5%; left: 3%; transform: rotate(-12deg); }
+  .deco-text.t2 { font-size: 5rem; bottom: 8%; left: 8%; transform: rotate(6deg); }
+  .deco-text.t3 { font-size: 6rem; top: 12%; right: 32%; transform: rotate(-4deg); }
+  .deco-text.t4 { font-size: 4rem; bottom: 20%; left: 35%; transform: rotate(10deg); }
+
+  /* Decorative circles */
+  .deco-circle {
+    position: fixed;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 1;
+    transition: border-color 0.4s, background 0.4s;
+  }
+  .deco-circle.c1 {
+    width: 300px; height: 300px;
+    border: 1px solid var(--deco-border);
+    top: -80px; right: -60px;
+  }
+  .deco-circle.c2 {
+    width: 200px; height: 200px;
+    border: 1px solid rgba(184,160,212,0.05);
+    bottom: 10%; left: -50px;
+  }
+  .deco-circle.c3 {
+    width: 120px; height: 120px;
+    background: radial-gradient(circle, var(--deco-color) 0%, transparent 70%);
+    top: 40%; right: 25%;
+  }
+
+  /* Small diamond shapes */
+  .deco-diamond {
+    position: fixed;
+    width: 8px; height: 8px;
+    background: var(--deco-diamond);
+    transform: rotate(45deg);
+    pointer-events: none;
+    z-index: 1;
+    transition: background 0.4s;
+  }
+  .deco-diamond.d1 { top: 18%; left: 22%; }
+  .deco-diamond.d2 { top: 75%; left: 15%; animation: twinkle 3s ease-in-out infinite; }
+  .deco-diamond.d3 { top: 30%; right: 38%; animation: twinkle 4s ease-in-out 1s infinite; }
+  .deco-diamond.d4 { bottom: 25%; left: 42%; animation: twinkle 3.5s ease-in-out 0.5s infinite; }
+  .deco-diamond.d5 { top: 55%; left: 8%; animation: twinkle 5s ease-in-out 2s infinite; }
+
+  @keyframes twinkle {
+    0%, 100% { opacity: 0.15; transform: rotate(45deg) scale(1); }
+    50% { opacity: 0.5; transform: rotate(45deg) scale(1.3); }
+  }
+
+  /* === Floating particles === */
+  .particles { position: fixed; inset: 0; z-index: 1; pointer-events: none; overflow: hidden; }
+  .particle {
+    position: absolute;
+    border-radius: 50%;
+    opacity: 0;
+    animation: float-up linear infinite;
+  }
+  @keyframes float-up {
+    0% { transform: translateY(0) scale(0); opacity: 0; }
+    10% { opacity: 0.8; }
+    90% { opacity: 0.3; }
+    100% { transform: translateY(-105vh) scale(1); opacity: 0; }
+  }
+
+  /* === Left panel — 50% === */
+  .left-panel {
+    width: 50%;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    position: relative;
+    z-index: 2;
+    overflow: hidden;
+  }
+
+  /* Floor glow under character */
+  .left-panel::before {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 80%; height: 35%;
+    background: radial-gradient(ellipse at bottom, var(--char-glow) 0%, var(--char-glow2) 40%, transparent 70%);
+    pointer-events: none;
+    transition: background 0.4s;
+  }
+
+  /* Decorative quote near character */
+  .char-quote {
+    position: absolute;
+    top: 8%;
+    left: 8%;
+    font-family: var(--font-display);
+    font-size: 0.85rem;
+    color: var(--char-quote-color);
+    writing-mode: vertical-rl;
+    letter-spacing: 0.3em;
+    line-height: 2;
+    z-index: 3;
+    transition: color 0.4s;
+  }
+  .char-quote::before {
+    content: '';
+    display: block;
+    width: 1px;
+    height: 40px;
+    background: linear-gradient(to bottom, transparent, var(--char-quote-color));
+    margin: 0 auto 0.8rem;
+  }
+
+  .character {
+    height: 88vh;
+    max-height: 750px;
+    object-fit: contain;
+    transform-origin: bottom center;
+    position: relative;
+    z-index: 2;
+    filter: drop-shadow(0 0 30px var(--char-shadow));
+    transition: filter 0.4s;
+  }
+
+  .character.idle { animation: breathe 4s ease-in-out infinite; }
+  .character.listening { animation: listen 3s ease-in-out infinite; }
+  .character.thinking { animation: think 2.5s ease-in-out infinite; }
+  .character.speaking { animation: speak 0.6s ease-in-out infinite alternate; }
+  .character.greeting { animation: greeting 1.2s ease-in-out; }
+  .character.happy { animation: happy 0.8s ease-in-out 3; }
+  .character.shy { animation: shy 1.5s ease-in-out; }
+  .character.nod { animation: nod 0.6s ease-in-out 2; }
+  .character.surprised { animation: surprised 0.5s ease-out; }
+
+  @keyframes breathe {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-5px) scale(1.004); }
+  }
+  @keyframes listen {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-3px) rotate(0.4deg); }
+  }
+  @keyframes think {
+    0%, 100% { transform: rotate(0deg) translateX(0); }
+    30% { transform: rotate(-1.5deg) translateX(-2px); }
+    70% { transform: rotate(0.8deg) translateX(1px); }
+  }
+  @keyframes speak {
+    0% { transform: translateY(0) scale(1); }
+    100% { transform: translateY(-7px) scale(1.006); }
+  }
+  @keyframes greeting {
+    0% { transform: translateY(0) rotate(0deg); }
+    20% { transform: translateY(-12px) rotate(-3deg); }
+    40% { transform: translateY(-8px) rotate(2deg); }
+    60% { transform: translateY(-10px) rotate(-1deg); }
+    100% { transform: translateY(0) rotate(0deg); }
+  }
+  @keyframes happy {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-14px) scale(1.02); }
+  }
+  @keyframes shy {
+    0% { transform: translateX(0) rotate(0deg); }
+    20% { transform: translateX(8px) rotate(2deg); }
+    50% { transform: translateX(5px) rotate(1.5deg) scale(0.98); }
+    100% { transform: translateX(0) rotate(0deg) scale(1); }
+  }
+  @keyframes nod {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(6px); }
+  }
+  @keyframes surprised {
+    0% { transform: scale(1) translateY(0); }
+    30% { transform: scale(1.03) translateY(-10px); }
+    100% { transform: scale(1) translateY(0); }
+  }
+
+  /* === Right panel — 50% === */
+  .right-panel {
+    width: 50%;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    padding: 2.5rem 2.5rem;
+    position: relative;
+    z-index: 3;
+  }
+
+  .panel-glass {
+    position: absolute;
+    inset: 0.8rem;
+    background: var(--glass-bg);
+    backdrop-filter: blur(50px) saturate(1.5);
+    -webkit-backdrop-filter: blur(50px) saturate(1.5);
+    border: 1px solid var(--glass-border);
+    border-radius: 24px;
+    box-shadow:
+      0 0 80px rgba(200,125,186,0.03),
+      inset 0 1px 0 rgba(255,255,255,0.03);
+    z-index: -1;
     overflow: hidden;
-    user-select: none;
+    transition: background 0.4s, border-color 0.4s, box-shadow 0.4s;
+  }
+
+  [data-theme="light"] .panel-glass {
+    box-shadow:
+      0 4px 40px rgba(160,100,140,0.08),
+      inset 0 1px 0 rgba(255,255,255,0.5);
+  }
+
+  /* Inner decorative line pattern on panel */
+  .panel-glass::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 120px;
+    background:
+      repeating-linear-gradient(
+        -45deg,
+        transparent,
+        transparent 20px,
+        rgba(200,125,186,0.015) 20px,
+        rgba(200,125,186,0.015) 21px
+      );
+    pointer-events: none;
+  }
+
+  /* Corner ornaments */
+  .corner-ornament {
+    position: absolute;
+    width: 32px; height: 32px;
+    pointer-events: none;
+    z-index: 1;
+  }
+  .corner-ornament svg { width: 100%; height: 100%; }
+  .corner-ornament.tl { top: 20px; left: 20px; }
+  .corner-ornament.br { bottom: 20px; right: 20px; transform: rotate(180deg); }
+
+  .header { text-align: center; margin-bottom: 1rem; position: relative; }
+
+  /* Coffee cup icon */
+  .cafe-icon {
+    font-size: 1.8rem;
+    margin-bottom: 0.4rem;
+    opacity: 0.7;
+    display: block;
   }
 
   .title {
-    font-size: 1.4rem;
-    color: #d4a8e0;
-    margin-bottom: 0.5rem;
-    letter-spacing: 0.1em;
+    font-family: var(--font-display);
+    font-size: 2.1rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--accent-pink) 0%, var(--accent-lavender) 50%, var(--accent-warm) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: 0.08em;
+    line-height: 1.4;
   }
 
   .subtitle {
-    font-size: 0.85rem;
-    color: #8a7a9a;
-    margin-bottom: 2rem;
+    font-size: 0.95rem;
+    color: var(--text-muted);
+    margin-top: 0.35rem;
+    letter-spacing: 0.2em;
+    transition: color 0.4s;
   }
 
-  .call-btn {
-    width: 120px;
-    height: 120px;
+  .divider {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0.9rem auto 0;
+    justify-content: center;
+  }
+  .divider-line {
+    width: 35px; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent-rose), transparent);
+  }
+  .divider-dot {
+    width: 4px; height: 4px;
+    background: var(--accent-rose);
     border-radius: 50%;
-    border: none;
-    cursor: pointer;
-    font-size: 1rem;
-    font-weight: 600;
-    transition: all 0.3s ease;
-    position: relative;
-    z-index: 1;
+    opacity: 0.5;
   }
 
-  .call-btn.idle {
-    background: linear-gradient(135deg, #e8a0bf, #c77dba);
-    color: white;
-    box-shadow: 0 4px 30px rgba(200, 125, 186, 0.4);
+  /* Info bar */
+  .info-bar {
+    display: flex;
+    gap: 1.2rem;
+    justify-content: center;
+    margin-bottom: 0.8rem;
+    font-size: 0.88rem;
+    color: var(--text-muted);
+    letter-spacing: 0.05em;
+    transition: color 0.4s;
   }
-
-  .call-btn.idle:hover {
-    transform: scale(1.05);
-    box-shadow: 0 6px 40px rgba(200, 125, 186, 0.6);
+  .info-item {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
   }
-
-  .call-btn.active {
-    background: linear-gradient(135deg, #e05a5a, #c0392b);
-    color: white;
-    box-shadow: 0 4px 30px rgba(192, 57, 43, 0.4);
-  }
-
-  .call-btn.active:hover {
-    transform: scale(1.05);
-  }
-
-  /* Pulse animation when active */
-  .pulse-ring {
-    position: absolute;
-    width: 120px;
-    height: 120px;
+  .info-dot {
+    width: 5px; height: 5px;
     border-radius: 50%;
-    border: 2px solid rgba(200, 125, 186, 0.3);
-    animation: pulse 2s ease-out infinite;
-    pointer-events: none;
-    display: none;
+    background: var(--accent-pink);
+    opacity: 0.4;
+  }
+  .info-dot.online { background: #6ecf8a; opacity: 0.8; animation: blink 2s ease-in-out infinite; }
+  @keyframes blink { 0%,100% { opacity:0.8; } 50% { opacity:0.3; } }
+
+  .status {
+    font-size: 1.05rem;
+    color: var(--text-soft);
+    min-height: 1.4rem;
+    margin-bottom: 0.6rem;
+    text-align: center;
+    letter-spacing: 0.05em;
+    transition: color 0.4s;
   }
 
-  .active-state .pulse-ring {
-    display: block;
-    border-color: rgba(224, 90, 90, 0.3);
-  }
-
-  @keyframes pulse {
-    0% { transform: scale(1); opacity: 1; }
-    100% { transform: scale(2); opacity: 0; }
-  }
-
+  /* === Call button === */
   .btn-container {
     position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin: 1.5rem 0;
+    margin: 0.5rem 0 0.8rem;
   }
 
-  .status {
-    font-size: 0.9rem;
-    color: #a89abc;
-    min-height: 1.5rem;
-    margin-bottom: 1.5rem;
+  .call-btn {
+    width: 82px; height: 82px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    font-weight: 500;
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    position: relative;
+    z-index: 1;
+    letter-spacing: 0.12em;
   }
 
+  .call-btn.idle {
+    background: linear-gradient(135deg, var(--accent-pink), var(--accent-rose));
+    color: white;
+    box-shadow: 0 4px 28px rgba(200,125,186,0.35), 0 0 0 1px rgba(200,125,186,0.12), inset 0 1px 0 rgba(255,255,255,0.18);
+  }
+  .call-btn.idle:hover {
+    transform: scale(1.1);
+    box-shadow: 0 8px 44px rgba(200,125,186,0.5), 0 0 0 1px rgba(200,125,186,0.25);
+  }
+  .call-btn.active {
+    background: linear-gradient(135deg, #e05a6a, #c0394b);
+    color: white;
+    box-shadow: 0 4px 24px rgba(192,57,75,0.35);
+  }
+  .call-btn.active:hover { transform: scale(1.1); }
+
+  .pulse-ring {
+    position: absolute;
+    width: 82px; height: 82px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(200,125,186,0.2);
+    animation: pulse 2.5s ease-out infinite;
+    pointer-events: none;
+    display: none;
+  }
+  .active-state .pulse-ring { display: block; border-color: rgba(224,90,90,0.18); }
+  .active-state .pulse-ring:nth-child(2) { animation-delay: 0.9s; }
+  @keyframes pulse {
+    0% { transform: scale(1); opacity: 1; }
+    100% { transform: scale(2.4); opacity: 0; }
+  }
+
+  /* Btn label below */
+  .btn-label {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    text-align: center;
+    margin-top: 0.5rem;
+    letter-spacing: 0.1em;
+    transition: color 0.4s;
+  }
+
+  /* === Transcript === */
   .transcript-area {
-    width: 90%;
-    max-width: 500px;
-    max-height: 40vh;
+    width: 100%;
+    flex: 1;
     overflow-y: auto;
-    padding: 1rem;
+    padding: 1rem 0.6rem;
     display: flex;
     flex-direction: column;
-    gap: 0.6rem;
+    gap: 0.8rem;
+    max-height: 50vh;
+    scrollbar-width: thin;
+    scrollbar-color: var(--scroll-thumb) transparent;
+    margin-top: 0.8rem;
   }
+  .transcript-area::-webkit-scrollbar { width: 3px; }
+  .transcript-area::-webkit-scrollbar-thumb { background: var(--scroll-thumb); border-radius: 4px; }
 
   .msg {
-    padding: 0.6rem 1rem;
-    border-radius: 12px;
-    font-size: 0.9rem;
-    line-height: 1.5;
-    max-width: 85%;
+    padding: 0.85rem 1.3rem;
+    border-radius: 18px;
+    font-size: 1.15rem;
+    line-height: 1.8;
+    max-width: 92%;
+    font-weight: 400;
+    -webkit-font-smoothing: antialiased;
     word-wrap: break-word;
+    animation: msg-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transition: background 0.4s, border-color 0.4s, color 0.4s;
   }
-
+  @keyframes msg-in {
+    0% { opacity: 0; transform: translateY(6px) scale(0.97); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+  }
   .msg.user {
-    background: rgba(200, 125, 186, 0.15);
-    color: #d4a8e0;
+    background: var(--msg-user-bg);
+    border: 1px solid var(--msg-user-border);
+    color: var(--msg-user-color);
     align-self: flex-end;
     border-bottom-right-radius: 4px;
   }
-
   .msg.assistant {
-    background: rgba(100, 100, 160, 0.15);
-    color: #b8c0e0;
+    background: var(--msg-assistant-bg);
+    border: 1px solid var(--msg-assistant-border);
+    color: var(--msg-assistant-color);
     align-self: flex-start;
     border-bottom-left-radius: 4px;
   }
 
   .error-msg {
-    color: #e05a5a;
-    font-size: 0.85rem;
+    color: var(--error-color);
+    font-size: 0.92rem;
     text-align: center;
-    margin-top: 1rem;
+    margin-top: 0.4rem;
+    transition: color 0.4s;
+  }
+
+  /* Footer credit */
+  .footer {
+    font-size: 0.72rem;
+    color: var(--footer-color);
+    text-align: center;
+    margin-top: auto;
+    padding-top: 0.5rem;
+    letter-spacing: 0.08em;
+    transition: color 0.4s;
+  }
+
+  /* === Mobile === */
+  @media (max-width: 700px) {
+    body { flex-direction: column; }
+    .left-panel { width: 100%; flex: none; height: 40vh; }
+    .character { height: 38vh; max-height: 380px; }
+    .char-quote { display: none; }
+    .right-panel { width: 100%; flex: 1; padding: 1rem; }
+    .panel-glass { inset: 0; border-radius: 20px 20px 0 0; }
+    .transcript-area { max-height: 25vh; }
+    .title { font-size: 1.3rem; }
+    .msg { font-size: 0.95rem; }
+    .deco-text { display: none; }
+    .theme-toggle { top: 10px; right: 10px; width: 38px; height: 38px; font-size: 1rem; }
   }
 </style>
 </head>
 <body>
 
-<div class="title">可霼の咏啊店</div>
-<div class="subtitle">来杯解忧咏啊吧</div>
+<!-- Theme toggle -->
+<button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="切换白天/夜间模式">🌙</button>
 
-<div class="status" id="status"></div>
+<!-- Background layers -->
+<div class="bg-layer gradients"></div>
+<div class="bg-layer grid"></div>
 
-<div class="btn-container" id="btnContainer">
-  <div class="pulse-ring"></div>
-  <button class="call-btn idle" id="callBtn" onclick="toggleCall()">拨号</button>
+<!-- Decorative kanji watermarks -->
+<div class="deco-text t1">珈琲</div>
+<div class="deco-text t2">癒</div>
+<div class="deco-text t3">魔法</div>
+<div class="deco-text t4">夢</div>
+
+<!-- Decorative shapes -->
+<div class="deco-circle c1"></div>
+<div class="deco-circle c2"></div>
+<div class="deco-circle c3"></div>
+<div class="deco-diamond d1"></div>
+<div class="deco-diamond d2"></div>
+<div class="deco-diamond d3"></div>
+<div class="deco-diamond d4"></div>
+<div class="deco-diamond d5"></div>
+
+<!-- Particles -->
+<div class="particles" id="particles"></div>
+
+<!-- Character -->
+<div class="left-panel">
+  <div class="char-quote">治愈魔法少女</div>
+  <img src="/kelin.png" alt="" class="character idle" id="character">
 </div>
 
-<div class="transcript-area" id="transcripts"></div>
-<div class="error-msg" id="errorMsg"></div>
+<!-- UI Panel -->
+<div class="right-panel">
+  <div class="panel-glass">
+    <div class="corner-ornament tl"><svg viewBox="0 0 32 32" fill="none"><path d="M0 16 L0 0 L16 0" stroke="rgba(200,125,186,0.25)" stroke-width="1"/><circle cx="0" cy="0" r="2" fill="rgba(200,125,186,0.2)"/></svg></div>
+    <div class="corner-ornament br"><svg viewBox="0 0 32 32" fill="none"><path d="M0 16 L0 0 L16 0" stroke="rgba(200,125,186,0.25)" stroke-width="1"/><circle cx="0" cy="0" r="2" fill="rgba(200,125,186,0.2)"/></svg></div>
+  </div>
+
+  <div class="header">
+    <span class="cafe-icon">&#9749;</span>
+    <div class="title">可霖の咖啡店</div>
+    <div class="subtitle">来杯解忧咖啡吧</div>
+    <div class="divider">
+      <div class="divider-line"></div>
+      <div class="divider-dot"></div>
+      <div class="divider-line"></div>
+    </div>
+  </div>
+
+  <div class="info-bar">
+    <div class="info-item"><div class="info-dot online"></div>在线</div>
+    <div class="info-item"><div class="info-dot"></div>魔法世界</div>
+    <div class="info-item"><div class="info-dot"></div>解忧专区</div>
+  </div>
+
+  <div class="status" id="status"></div>
+
+  <div class="btn-container" id="btnContainer">
+    <div class="pulse-ring"></div>
+    <div class="pulse-ring"></div>
+    <button class="call-btn idle" id="callBtn" onclick="toggleCall()">拨号</button>
+  </div>
+  <div class="btn-label">点击与可霖通话</div>
+
+  <div class="transcript-area" id="transcripts"></div>
+  <div class="error-msg" id="errorMsg"></div>
+
+  <div class="footer">Powered by Kelin's Magic</div>
+</div>
 
 <script>
-const WS_URL = `ws://${location.host}/ws`;
+// === Theme ===
+const themeBtn = document.getElementById('themeToggle');
+function toggleTheme() {
+  const html = document.documentElement;
+  const isLight = html.getAttribute('data-theme') === 'light';
+  html.setAttribute('data-theme', isLight ? 'dark' : 'light');
+  themeBtn.textContent = isLight ? '🌙' : '☀️';
+  localStorage.setItem('kelin-theme', isLight ? 'dark' : 'light');
+}
+(function() {
+  const saved = localStorage.getItem('kelin-theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', saved);
+  themeBtn.textContent = saved === 'light' ? '☀️' : '🌙';
+})();
 
-let ws = null;
-let audioCtx = null;
-let workletNode = null;
-let mediaStream = null;
-let isActive = false;
-let playbackCtx = null;
-let nextPlayTime = 0;
-
-const btn = document.getElementById("callBtn");
-const btnContainer = document.getElementById("btnContainer");
-const statusEl = document.getElementById("status");
-const transcriptsEl = document.getElementById("transcripts");
-const errorEl = document.getElementById("errorMsg");
-
-// --- Energy-based VAD ---
-let wasUserSpeaking = false;
-const VAD_THRESHOLD = 0.01; // RMS threshold
-const VAD_FRAMES_NEEDED = 3;
-let vadFrameCount = 0;
-
-function checkVAD(pcmBuffer) {
-  // pcmBuffer is ArrayBuffer of Int16
-  const samples = new Int16Array(pcmBuffer);
-  let sum = 0;
-  for (let i = 0; i < samples.length; i++) {
-    const normalized = samples[i] / 32768;
-    sum += normalized * normalized;
+// === Particles ===
+(function() {
+  const c = document.getElementById('particles');
+  const colors = ['rgba(232,160,191,0.45)','rgba(184,160,212,0.35)','rgba(212,160,118,0.3)','rgba(255,220,240,0.2)'];
+  for (let i = 0; i < 35; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    const s = Math.random() * 3.5 + 1.5;
+    const dur = Math.random() * 14 + 9;
+    const delay = Math.random() * 18;
+    p.style.cssText = `width:${s}px;height:${s}px;left:${Math.random()*100}%;bottom:-10px;background:${colors[Math.floor(Math.random()*colors.length)]};animation-duration:${dur}s;animation-delay:${delay}s;box-shadow:0 0 ${s*3}px ${colors[Math.floor(Math.random()*colors.length)]};`;
+    c.appendChild(p);
   }
-  const rms = Math.sqrt(sum / samples.length);
+})();
 
-  if (rms > VAD_THRESHOLD) {
-    vadFrameCount++;
-    if (vadFrameCount >= VAD_FRAMES_NEEDED && !wasUserSpeaking) {
-      wasUserSpeaking = true;
-      // User started speaking — send interrupt if AI is responding
-      if (ws && ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({ type: "interrupt" }));
-      }
-    }
-  } else {
-    vadFrameCount = 0;
-    wasUserSpeaking = false;
-  }
+// === Chat History (localStorage) ===
+const HISTORY_KEY = 'kelin-chat-history';
+const MAX_HISTORY = 100;
+
+function saveHistory(role, text) {
+  const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+  history.push({ role, text, time: Date.now() });
+  if (history.length > MAX_HISTORY) history.splice(0, history.length - MAX_HISTORY);
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
 }
 
-async function toggleCall() {
-  if (isActive) {
-    stopCall();
-  } else {
-    await startCall();
-  }
+function loadHistory() {
+  const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+  history.forEach(item => {
+    const div = document.createElement("div");
+    div.className = `msg ${item.role}`;
+    div.textContent = item.text;
+    div.style.animation = 'none';
+    transcriptsEl.appendChild(div);
+  });
+  if (history.length > 0) transcriptsEl.scrollTop = transcriptsEl.scrollHeight;
 }
 
-async function startCall() {
-  errorEl.textContent = "";
-  transcriptsEl.innerHTML = "";
+function clearHistory() {
+  localStorage.removeItem(HISTORY_KEY);
+  transcriptsEl.innerHTML = '';
+}
 
-  try {
-    mediaStream = await navigator.mediaDevices.getUserMedia({
-      audio: { sampleRate: { ideal: 48000 }, channelCount: 1, echoCancellation: true, noiseSuppression: true }
-    });
-  } catch {
-    errorEl.textContent = "请允许麦克风权限后重试";
-    return;
+// === Emotion Detection & Character Animation ===
+// Detect emotion from assistant's own text
+const EMOTION_PATTERNS = {
+  happy:     /[哈嘿嘻呀啦耶开心高兴快乐棒太好]|好玩|有趣|喜欢你/,
+  shy:       /[害羞脸红啊呜]|才不是|讨厌|哼|别说了|人家/,
+  surprised: /[啊哇呀咦]|真的吗|不会吧|天哪|居然|没想到|！{2,}/,
+  nod:       /[嗯恩对是]|没错|说得对|确实|理解|明白|懂了/,
+  greeting:  /你好|欢迎|来啦|好久不见|早上好|晚上好|下午好/,
+};
+
+// Detect user's emotion → 可霖 reacts empathetically
+const USER_EMOTION_REACTIONS = {
+  // User is sad/troubled → 可霖 nods understandingly
+  sad:       { pattern: /难过|伤心|哭|不开心|累了|烦|郁闷|心烦|崩溃|失眠|焦虑|压力|孤独|寂寞|想哭|受不了|好难|痛苦|分手|失恋/, reaction: 'nod' },
+  // User is happy → 可霖 gets happy too
+  happy:     { pattern: /开心|高兴|快乐|太好了|哈哈|嘿嘿|好棒|成功|通过|录取|发工资|好消息|恋爱|表白|喜欢/, reaction: 'happy' },
+  // User is surprised/shocked → 可霖 also surprised
+  shocked:   { pattern: /什么|不会吧|天哪|我靠|卧槽|真假|离谱|震惊|吓死|没想到|居然/, reaction: 'surprised' },
+  // User greets → 可霖 greets back
+  greeting:  { pattern: /你好|在吗|可霖|来了|好久不见|早安|晚安|早上好|下午好|晚上好/, reaction: 'greeting' },
+  // User shows affection → 可霖 gets shy
+  affection: { pattern: /喜欢你|爱你|好可爱|最喜欢|想你|抱抱|亲亲|老婆|宝贝|谢谢你/, reaction: 'shy' },
+};
+
+function detectEmotion(text) {
+  for (const [emotion, pattern] of Object.entries(EMOTION_PATTERNS)) {
+    if (pattern.test(text)) return emotion;
   }
+  return null;
+}
 
-  // WebSocket
-  ws = new WebSocket(WS_URL);
-  ws.binaryType = "arraybuffer";
+function detectUserEmotion(text) {
+  for (const [, { pattern, reaction }] of Object.entries(USER_EMOTION_REACTIONS)) {
+    if (pattern.test(text)) return reaction;
+  }
+  return null;
+}
 
-  ws.onopen = async () => {
-    ws.send(JSON.stringify({ type: "start" }));
+let emotionTimer = null;
+function playEmotionAnimation(emotion) {
+  if (emotionTimer) clearTimeout(emotionTimer);
+  setCharacterState(emotion);
+  const durations = { greeting: 1200, happy: 2400, shy: 1500, nod: 1200, surprised: 500 };
+  emotionTimer = setTimeout(() => {
+    if (isActive) setCharacterState('speaking');
+    else setCharacterState('idle');
+    emotionTimer = null;
+  }, durations[emotion] || 1000);
+}
 
-    // Audio capture
-    audioCtx = new AudioContext({ sampleRate: 48000 });
+// === App ===
+const WS_URL = `${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}/ws`;
+let ws=null, audioCtx=null, workletNode=null, mediaStream=null, isActive=false, playbackCtx=null, nextPlayTime=0;
+const btn=document.getElementById("callBtn"), btnContainer=document.getElementById("btnContainer");
+const statusEl=document.getElementById("status"), transcriptsEl=document.getElementById("transcripts");
+const errorEl=document.getElementById("errorMsg"), character=document.getElementById("character");
+const btnLabel=document.querySelector(".btn-label");
+
+let wasUserSpeaking=false; const VAD_THRESHOLD=0.01, VAD_FRAMES_NEEDED=3; let vadFrameCount=0;
+
+function setCharacterState(s){character.className="character "+s;}
+
+function checkVAD(buf){
+  const samples=new Int16Array(buf); let sum=0;
+  for(let i=0;i<samples.length;i++){const n=samples[i]/32768;sum+=n*n;}
+  const rms=Math.sqrt(sum/samples.length);
+  if(rms>VAD_THRESHOLD){vadFrameCount++;if(vadFrameCount>=VAD_FRAMES_NEEDED&&!wasUserSpeaking){wasUserSpeaking=true;if(ws&&ws.readyState===WebSocket.OPEN)ws.send(JSON.stringify({type:"interrupt"}));}}
+  else{vadFrameCount=0;wasUserSpeaking=false;}
+}
+
+async function toggleCall(){isActive?stopCall():await startCall();}
+
+async function startCall(){
+  errorEl.textContent="";
+  try{mediaStream=await navigator.mediaDevices.getUserMedia({audio:{sampleRate:{ideal:48000},channelCount:1,echoCancellation:true,noiseSuppression:true}});}
+  catch{errorEl.textContent="请允许麦克风权限后重试";return;}
+  ws=new WebSocket(WS_URL);ws.binaryType="arraybuffer";
+  ws.onopen=async()=>{
+    ws.send(JSON.stringify({type:"start"}));
+    audioCtx=new AudioContext({sampleRate:48000});
     await audioCtx.audioWorklet.addModule("/audio-processor.js");
-    const source = audioCtx.createMediaStreamSource(mediaStream);
-    workletNode = new AudioWorkletNode(audioCtx, "audio-capture-processor");
-    workletNode.port.onmessage = (e) => {
-      if (ws && ws.readyState === WebSocket.OPEN) {
-        checkVAD(e.data);
-        ws.send(new Uint8Array(e.data));
+    const src=audioCtx.createMediaStreamSource(mediaStream);
+    workletNode=new AudioWorkletNode(audioCtx,"audio-capture-processor");
+    workletNode.port.onmessage=(e)=>{if(ws&&ws.readyState===WebSocket.OPEN){checkVAD(e.data);ws.send(new Uint8Array(e.data));}};
+    src.connect(workletNode);workletNode.connect(audioCtx.destination);
+    playbackCtx=new AudioContext({sampleRate:24000});nextPlayTime=0;
+  };
+  ws.onmessage=(e)=>{
+    if(e.data instanceof ArrayBuffer){playAudioChunk(e.data);}
+    else{const msg=JSON.parse(e.data);
+      if(msg.type==="transcript"){
+        addTranscript(msg.role,msg.text);
+        if(msg.role==="user"){
+          // React to user's emotion
+          const reaction = detectUserEmotion(msg.text);
+          if(reaction) playEmotionAnimation(reaction);
+        } else if(msg.role==="assistant"){
+          // React to own text emotion
+          const emotion = detectEmotion(msg.text);
+          if(emotion) playEmotionAnimation(emotion);
+        }
       }
-    };
-    source.connect(workletNode);
-    workletNode.connect(audioCtx.destination); // needed to keep processor alive
-
-    // Playback context
-    playbackCtx = new AudioContext({ sampleRate: 16000 });
-    nextPlayTime = 0;
-  };
-
-  ws.onmessage = (e) => {
-    if (e.data instanceof ArrayBuffer) {
-      playAudioChunk(e.data);
-    } else {
-      const msg = JSON.parse(e.data);
-      if (msg.type === "transcript") {
-        addTranscript(msg.role, msg.text);
-      } else if (msg.type === "status") {
-        updateStatus(msg.state);
-      } else if (msg.type === "interrupt_ack") {
-        // Reset playback schedule so next response plays immediately
-        nextPlayTime = 0;
-      }
+      else if(msg.type==="status")updateStatus(msg.state);
+      else if(msg.type==="interrupt_ack")nextPlayTime=0;
     }
   };
-
-  ws.onclose = () => {
-    if (isActive) {
-      // Auto-reconnect with exponential backoff
-      reconnect();
-    }
-  };
-
-  ws.onerror = () => {
-    errorEl.textContent = "连接失败，正在重试...";
-  };
-
-  isActive = true;
-  btn.textContent = "挂断";
-  btn.className = "call-btn active";
-  btnContainer.classList.add("active-state");
+  ws.onclose=()=>{if(isActive)reconnect();};
+  ws.onerror=()=>{errorEl.textContent="连接失败，正在重试...";};
+  isActive=true;btn.textContent="挂断";btn.className="call-btn active";
+  btnContainer.classList.add("active-state");btnLabel.textContent="通话中";
+  setCharacterState("greeting");
+  setTimeout(()=>{ if(isActive) setCharacterState("listening"); }, 1200);
 }
 
-function stopCall() {
-  if (ws && ws.readyState === WebSocket.OPEN) {
-    ws.send(JSON.stringify({ type: "stop" }));
-    ws.close();
-  }
-  ws = null;
-
-  if (workletNode) { workletNode.disconnect(); workletNode = null; }
-  if (audioCtx) { audioCtx.close(); audioCtx = null; }
-  if (playbackCtx) { playbackCtx.close(); playbackCtx = null; }
-  if (mediaStream) { mediaStream.getTracks().forEach(t => t.stop()); mediaStream = null; }
-
-  isActive = false;
-  wasUserSpeaking = false;
-  vadFrameCount = 0;
-  btn.textContent = "拨号";
-  btn.className = "call-btn idle";
-  btnContainer.classList.remove("active-state");
-  statusEl.textContent = "";
+function stopCall(){
+  if(ws&&ws.readyState===WebSocket.OPEN){ws.send(JSON.stringify({type:"stop"}));ws.close();}ws=null;
+  if(workletNode){workletNode.disconnect();workletNode=null;}
+  if(audioCtx){audioCtx.close();audioCtx=null;}
+  if(playbackCtx){playbackCtx.close();playbackCtx=null;}
+  if(mediaStream){mediaStream.getTracks().forEach(t=>t.stop());mediaStream=null;}
+  isActive=false;wasUserSpeaking=false;vadFrameCount=0;
+  if(emotionTimer){clearTimeout(emotionTimer);emotionTimer=null;}
+  btn.textContent="拨号";btn.className="call-btn idle";
+  btnContainer.classList.remove("active-state");btnLabel.textContent="点击与可霖通话";
+  statusEl.textContent="";setCharacterState("idle");
 }
 
-function playAudioChunk(arrayBuffer) {
-  if (!playbackCtx) return;
-  const int16 = new Int16Array(arrayBuffer);
-  const float32 = new Float32Array(int16.length);
-  for (let i = 0; i < int16.length; i++) {
-    float32[i] = int16[i] / 32768;
-  }
-
-  const buffer = playbackCtx.createBuffer(1, float32.length, 16000);
-  buffer.getChannelData(0).set(float32);
-
-  const source = playbackCtx.createBufferSource();
-  source.buffer = buffer;
-  source.connect(playbackCtx.destination);
-
-  const now = playbackCtx.currentTime;
-  const startTime = Math.max(now, nextPlayTime);
-  source.start(startTime);
-  nextPlayTime = startTime + buffer.duration;
+function playAudioChunk(ab){
+  if(!playbackCtx)return;
+  const i16=new Int16Array(ab),f32=new Float32Array(i16.length);
+  for(let i=0;i<i16.length;i++)f32[i]=i16[i]/32768;
+  const buf=playbackCtx.createBuffer(1,f32.length,24000);
+  buf.getChannelData(0).set(f32);
+  const src=playbackCtx.createBufferSource();src.buffer=buf;src.connect(playbackCtx.destination);
+  const now=playbackCtx.currentTime,st=Math.max(now,nextPlayTime);
+  src.start(st);nextPlayTime=st+buf.duration;
 }
 
-function addTranscript(role, text) {
-  const div = document.createElement("div");
-  div.className = `msg ${role}`;
-  div.textContent = text;
-  transcriptsEl.appendChild(div);
-  transcriptsEl.scrollTop = transcriptsEl.scrollHeight;
+function addTranscript(role,text){
+  const div=document.createElement("div");div.className=`msg ${role}`;div.textContent=text;
+  transcriptsEl.appendChild(div);transcriptsEl.scrollTop=transcriptsEl.scrollHeight;
+  saveHistory(role, text);
 }
 
-let reconnectAttempts = 0;
-function reconnect() {
-  const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 10000);
-  reconnectAttempts++;
-  statusEl.textContent = "连接断开，正在重连...";
-  setTimeout(async () => {
-    try {
-      await startCall();
-      reconnectAttempts = 0;
-    } catch {
-      reconnect();
-    }
-  }, delay);
+let reconnectAttempts=0;
+function reconnect(){
+  const delay=Math.min(1000*Math.pow(2,reconnectAttempts),10000);reconnectAttempts++;
+  statusEl.textContent="连接断开，正在重连...";
+  setTimeout(async()=>{try{await startCall();reconnectAttempts=0;}catch{reconnect();}},delay);
 }
 
-function updateStatus(state) {
-  const labels = {
-    listening: "可霼在听...",
-    thinking: "可霼在想...",
-    speaking: "可霼在说...",
-  };
-  statusEl.textContent = labels[state] || "";
+function updateStatus(state){
+  const labels={listening:"可霖在听...",thinking:"可霖在想...",speaking:"可霖在说..."};
+  statusEl.textContent=labels[state]||"";
+  if(isActive && !emotionTimer) setCharacterState(state);
 }
+
+// Load saved chat history on page load
+loadHistory();
 </script>
 </body>
 </html>
