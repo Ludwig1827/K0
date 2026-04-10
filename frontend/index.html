@@ -596,7 +596,9 @@
     border-radius: 16px;
     transition: background 0.4s, border-color 0.4s, opacity 0.3s;
   }
-  .chat-input-bar.disabled { opacity: 0.45; pointer-events: none; }
+  .chat-input-bar.disabled .chat-text-input,
+  .chat-input-bar.disabled .send-btn { opacity: 0.4; pointer-events: none; }
+  .chat-input-bar.disabled .chat-text-input::placeholder { color: var(--msg-assistant-color); opacity: 0.3; }
   .chat-input-bar .mini-call-btn {
     width: 38px; height: 38px; flex: none;
     border-radius: 50%;
