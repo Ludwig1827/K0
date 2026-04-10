@@ -43,8 +43,8 @@ EMOTION_TTS_SPEED = {
 }
 
 
-class VoiceSession:
-    """Orchestrates one voice conversation session over a WebSocket."""
+class ChatSession:
+    """Orchestrates one chat session (text + voice) over a WebSocket. Owns LLM state across the whole session; ASR/TTS only active during voice calls."""
 
     def __init__(self, ws: WebSocket):
         self.ws = ws

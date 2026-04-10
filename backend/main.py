@@ -3,7 +3,7 @@ from pathlib import Path
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.staticfiles import StaticFiles
 
-from voice_session import VoiceSession
+from chat_session import ChatSession
 
 app = FastAPI()
 
@@ -14,7 +14,7 @@ FRONTEND_DIR = Path(__file__).parent.parent / "frontend"
 @app.websocket("/ws")
 async def websocket_endpoint(ws: WebSocket):
     await ws.accept()
-    session: VoiceSession | None = None
+    session: ChatSession | None = None
 
     try:
         while True:
@@ -34,7 +34,7 @@ async def websocket_endpoint(ws: WebSocket):
                     if msg_type == "start":
                         if session:
                             await session.stop()
-                        session = VoiceSession(ws)
+                        session = ChatSession(ws)
                         await session.start()
 
                     elif msg_type == "stop":
