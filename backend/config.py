@@ -5,8 +5,8 @@ load_dotenv()
 
 DASHSCOPE_API_KEY = os.getenv("DASHSCOPE_API_KEY", "")
 
-VOICE_ID = "qwen-tts-vc-kelin-voice-20260408033701993-842d"
-TTS_MODEL = "qwen3-tts-vc-realtime-2026-01-15"
+VOICE_ID = "cosyvoice-v3.5-plus-bailian-c421ddcc33f2411ea4f987f1c53ce945"
+TTS_MODEL = "cosyvoice-v3.5-plus"
 LLM_MODEL = "qwen-turbo"
 ASR_MODEL = "paraformer-realtime-v2"
 

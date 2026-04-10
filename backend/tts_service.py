@@ -1,8 +1,7 @@
 import asyncio
 import re
-import base64
 import dashscope
-from dashscope.audio.qwen_tts_realtime import QwenTtsRealtime, QwenTtsRealtimeCallback, AudioFormat
+from dashscope.audio.tts_v2 import SpeechSynthesizer, ResultCallback, AudioFormat
 from config import DASHSCOPE_API_KEY, VOICE_ID, TTS_MODEL
 
 dashscope.api_key = DASHSCOPE_API_KEY
@@ -14,11 +13,11 @@ MAX_BUFFER = 15
 
 
 class TTSService:
-    """Wraps QwenTtsRealtime streaming TTS with voice cloning. Buffers text to sentence boundaries, emits PCM audio."""
+    """Wraps CosyVoice streaming TTS with voice cloning. Feeds LLM text deltas, emits PCM audio."""
 
     def __init__(self):
         self.audio_queue: asyncio.Queue[bytes | None] = asyncio.Queue()
-        self._tts: QwenTtsRealtime | None = None
+        self._tts: SpeechSynthesizer | None = None
         self._loop: asyncio.AbstractEventLoop | None = None
         self._text_buffer = ""
         self._cancelled = False
@@ -29,16 +28,12 @@ class TTSService:
         self._cancelled = False
         self._text_buffer = ""
         callback = _Callback(self)
-        self._tts = QwenTtsRealtime(
+        self._tts = SpeechSynthesizer(
             model=TTS_MODEL,
-            callback=callback,
-        )
-        self._tts.connect()
-        self._tts.update_session(
             voice=VOICE_ID,
-            response_format=AudioFormat.PCM_24000HZ_MONO_16BIT,
-            mode="server_commit",
-            speed=speed,
+            format=AudioFormat.PCM_24000HZ_MONO_16BIT,
+            speech_rate=speed,
+            callback=callback,
         )
 
     def feed_text(self, text: str):
@@ -46,12 +41,12 @@ class TTSService:
         if self._cancelled or not self._tts:
             return
         if text:
-            self._tts.append_text(text)
+            self._tts.streaming_call(text)
 
     def flush(self):
         """Signal end of text and complete TTS stream."""
         if self._tts:
-            self._tts.finish()
+            self._tts.streaming_complete()
 
     def cancel(self):
         """Cancel current TTS generation."""
@@ -59,7 +54,7 @@ class TTSService:
         self._text_buffer = ""
         if self._tts:
             try:
-                self._tts.close()
+                self._tts.streaming_cancel()
             except Exception:
                 pass
             self._tts = None
@@ -79,22 +74,21 @@ class TTSService:
             self._loop.call_soon_threadsafe(self.audio_queue.put_nowait, None)
 
 
-class _Callback(QwenTtsRealtimeCallback):
+class _Callback(ResultCallback):
     def __init__(self, service: TTSService):
         self._service = service
 
     def on_open(self):
         pass
 
-    def on_event(self, response: dict):
-        event_type = response.get("type", "")
-        if event_type == "response.audio.delta":
-            audio_data = base64.b64decode(response["delta"])
-            self._service._on_audio(audio_data)
-        elif event_type == "session.finished":
-            self._service._on_complete()
-        elif event_type == "response.done":
-            self._service._on_complete()
+    def on_data(self, data: bytes) -> None:
+        self._service._on_audio(data)
 
-    def on_close(self, close_status_code, close_msg):
+    def on_complete(self):
+        self._service._on_complete()
+
+    def on_error(self, message):
+        self._service._on_complete()
+
+    def on_close(self):
         pass
