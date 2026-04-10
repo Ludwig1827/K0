@@ -55,21 +55,31 @@ class ChatSession:
         self._responding = False
 
     async def start(self):
-        """Start the voice session — launch ASR and background tasks."""
+        """Session-level start: launch background loops. Called on WS accept. No mic/TTS yet."""
         self._running = True
-        self.asr.start()
-        self.tts.start()  # Pre-establish TTS connection to reduce first-response latency
-        # Launch background tasks
         asyncio.create_task(self._transcript_loop())
         asyncio.create_task(self._audio_playback_loop())
+        await self._send_status("idle")
+
+    async def start_call(self):
+        """Start a voice call: activate ASR + TTS. Session must already be started."""
+        self.asr.start()
+        self.tts.start()
         await self._send_status("listening")
 
-    async def stop(self):
-        """Stop the voice session and clean up."""
-        self._running = False
+    async def stop_call(self):
+        """Stop ASR + TTS for a voice call. Session (and LLM history) stays alive."""
         self.asr.stop()
         self.tts.stop()
-        self.llm.cancel()
+        if self._responding:
+            self.llm.cancel()
+            self._responding = False
+        await self._send_status("idle")
+
+    async def stop(self):
+        """Terminate the entire session. Called on WebSocket disconnect."""
+        self._running = False
+        await self.stop_call()
 
     async def handle_audio(self, audio_bytes: bytes):
         """Handle incoming audio from the browser."""
@@ -92,6 +102,43 @@ class ChatSession:
             # Pre-build TTS connection for next turn
             self.tts.start()
             await self._send_status("listening")
+
+    async def handle_text_message(self, text: str):
+        """Process a text-mode message: run LLM, stream deltas back as JSON. No ASR/TTS."""
+        if not text.strip():
+            return
+        if self._responding:
+            # A voice turn or prior text turn is still in flight — ignore
+            return
+
+        self._responding = True
+
+        # Echo user message (triggers client user-emotion animation)
+        await self._send_json({
+            "type": "transcript",
+            "role": "user",
+            "text": text,
+        })
+        await self._send_status("thinking")
+
+        full_response = ""
+        try:
+            async for delta in self.llm.chat(text):
+                if not self._responding:
+                    break
+                full_response += delta
+                await self._send_json({
+                    "type": "text_delta",
+                    "text": delta,
+                })
+        finally:
+            if full_response:
+                await self._send_json({
+                    "type": "text_done",
+                    "text": full_response,
+                })
+            self._responding = False
+            await self._send_status("idle")
 
     async def _transcript_loop(self):
         """Watch ASR transcripts and trigger LLM + TTS pipeline."""
