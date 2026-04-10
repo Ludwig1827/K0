@@ -583,6 +583,70 @@
     transition: color 0.4s;
   }
 
+  /* === Chat input bar === */
+  .chat-input-bar {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    padding: 0.6rem 0.7rem;
+    margin-top: 0.8rem;
+    background: var(--msg-assistant-bg);
+    border: 1px solid var(--msg-assistant-border);
+    border-radius: 16px;
+    transition: background 0.4s, border-color 0.4s, opacity 0.3s;
+  }
+  .chat-input-bar.disabled { opacity: 0.45; pointer-events: none; }
+  .chat-input-bar .mini-call-btn {
+    width: 38px; height: 38px; flex: none;
+    border-radius: 50%;
+    border: 1px solid var(--msg-assistant-border);
+    background: transparent;
+    font-size: 1.1rem;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--msg-assistant-color);
+    transition: background 0.2s, transform 0.2s, border-color 0.4s, color 0.4s;
+  }
+  .chat-input-bar .mini-call-btn:hover { background: rgba(232,160,191,0.12); transform: scale(1.06); }
+  .chat-input-bar .mini-call-btn.in-call {
+    background: rgba(220,80,80,0.18);
+    border-color: rgba(220,80,80,0.55);
+    color: #ff8a8a;
+  }
+  .chat-input-bar input.chat-text-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--msg-assistant-color);
+    font-size: 1rem;
+    font-family: inherit;
+    padding: 0.4rem 0.3rem;
+  }
+  .chat-input-bar input.chat-text-input::placeholder { color: var(--msg-assistant-color); opacity: 0.5; }
+  .chat-input-bar .send-btn {
+    width: 38px; height: 38px; flex: none;
+    border-radius: 50%;
+    border: 1px solid var(--msg-assistant-border);
+    background: transparent;
+    cursor: pointer;
+    font-size: 1rem;
+    color: var(--msg-assistant-color);
+    transition: background 0.2s, opacity 0.2s, transform 0.2s, border-color 0.4s, color 0.4s;
+  }
+  .chat-input-bar .send-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+  .chat-input-bar .send-btn:not(:disabled):hover { background: rgba(160,180,212,0.15); transform: scale(1.06); }
+
+  /* Assistant bubble with streaming typing indicator */
+  .msg.assistant.streaming::after {
+    content: "▍";
+    display: inline-block;
+    margin-left: 2px;
+    animation: cursor-blink 1s steps(1) infinite;
+    opacity: 0.7;
+  }
+  @keyframes cursor-blink { 50% { opacity: 0; } }
+
   /* Footer credit */
   .footer {
     font-size: 0.72rem;
@@ -670,15 +734,20 @@
 
   <div class="status" id="status"></div>
 
-  <div class="btn-container" id="btnContainer">
+  <div class="btn-container" id="btnContainer" style="display:none;">
     <div class="pulse-ring"></div>
     <div class="pulse-ring"></div>
     <button class="call-btn idle" id="callBtn" onclick="toggleCall()">拨号</button>
   </div>
-  <div class="btn-label">点击与可霖通话</div>
 
   <div class="transcript-area" id="transcripts"></div>
   <div class="error-msg" id="errorMsg"></div>
+
+  <div class="chat-input-bar" id="chatInputBar">
+    <button class="mini-call-btn" id="miniCallBtn" onclick="toggleCall()" title="与可霖通话">&#128222;</button>
+    <input class="chat-text-input" id="chatTextInput" type="text" placeholder="和可霖说点什么…" maxlength="500" autocomplete="off" />
+    <button class="send-btn" id="sendBtn" onclick="sendText()" disabled>&#10148;</button>
+  </div>
 
   <div class="footer">Powered by Kelin's Magic</div>
 </div>
