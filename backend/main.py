@@ -1,3 +1,4 @@
+import asyncio
 import json
 from pathlib import Path
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
@@ -40,7 +41,7 @@ async def websocket_endpoint(ws: WebSocket):
                 elif msg_type == "interrupt":
                     await session.handle_interrupt()
                 elif msg_type == "text_message":
-                    await session.handle_text_message(data.get("text", ""))
+                    asyncio.create_task(session.handle_text_message(data.get("text", "")))
 
     except WebSocketDisconnect:
         pass

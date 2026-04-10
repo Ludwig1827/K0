@@ -865,6 +865,7 @@ function playEmotionAnimation(emotion) {
 const WS_URL = `${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}/ws`;
 let ws=null, audioCtx=null, workletNode=null, mediaStream=null, isActive=false, playbackCtx=null, nextPlayTime=0;
 let currentAssistantBubble = null; // streaming target for text_delta
+let isStreamingReply = false; // true while waiting for or receiving a text_delta/text_done
 const btn=document.getElementById("callBtn"), btnContainer=document.getElementById("btnContainer");
 const statusEl=document.getElementById("status"), transcriptsEl=document.getElementById("transcripts");
 const errorEl=document.getElementById("errorMsg"), character=document.getElementById("character");
@@ -920,6 +921,11 @@ function handleWsMessage(e) {
     appendAssistantDelta(msg.text);
   } else if (msg.type === "text_done") {
     finishAssistantStream(msg.text);
+  } else if (msg.type === "text_error") {
+    isStreamingReply = false;
+    sendBtn.disabled = chatInput.value.trim().length === 0;
+    errorEl.textContent = msg.reason === "in_call" ? "通话中无法发送文字" : "可霖正在回复，请稍候";
+    setTimeout(() => { if (errorEl.textContent.startsWith("可霖") || errorEl.textContent.startsWith("通话")) errorEl.textContent = ""; }, 2500);
   } else if (msg.type === "status") {
     updateStatus(msg.state);
   } else if (msg.type === "interrupt_ack") {
@@ -943,25 +949,35 @@ function finishAssistantStream(fullText) {
     currentAssistantBubble.classList.remove("streaming");
     currentAssistantBubble = null;
   }
-  saveHistory("assistant", fullText);
-  const emotion = detectEmotion(fullText);
-  if (emotion) playEmotionAnimation(emotion);
+  if (fullText) saveHistory("assistant", fullText);
+  isStreamingReply = false;
+  sendBtn.disabled = chatInput.value.trim().length === 0;
+  if (fullText) {
+    const emotion = detectEmotion(fullText);
+    if (emotion) playEmotionAnimation(emotion);
+  }
 }
 
 function sendText() {
+  if (isStreamingReply) return;
   const text = chatInput.value.trim();
   if (!text) return;
   if (!ws || ws.readyState !== WebSocket.OPEN) { errorEl.textContent = "未连接，请稍候…"; return; }
+  isStreamingReply = true;
   ws.send(JSON.stringify({ type: "text_message", text }));
   chatInput.value = "";
   sendBtn.disabled = true;
 }
 
 chatInput.addEventListener("input", () => {
-  sendBtn.disabled = chatInput.value.trim().length === 0;
+  sendBtn.disabled = isStreamingReply || chatInput.value.trim().length === 0;
 });
 chatInput.addEventListener("keydown", (e) => {
-  if (e.key === "Enter" && !e.isComposing) { e.preventDefault(); sendText(); }
+  if (e.key === "Enter" && !e.isComposing) {
+    e.preventDefault();
+    if (chatInputBar.classList.contains("disabled")) return;
+    sendText();
+  }
 });
 
 async function toggleCall(){isActive?stopCall():await startCall();}
@@ -1032,8 +1048,16 @@ function addTranscript(role,text){
   saveHistory(role, text);
 }
 
+const MAX_RECONNECT_ATTEMPTS = 5;
 let reconnectAttempts=0;
 function reconnect(){
+  if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+    reconnectAttempts = 0;
+    if (isActive) stopCall();
+    errorEl.textContent = "重连失败，请手动重试";
+    statusEl.textContent = "";
+    return;
+  }
   const delay=Math.min(1000*Math.pow(2,reconnectAttempts),10000);reconnectAttempts++;
   statusEl.textContent="连接断开，正在重连...";
   setTimeout(async()=>{

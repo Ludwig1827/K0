@@ -108,7 +108,11 @@ class ChatSession:
         if not text.strip():
             return
         if self._responding:
-            # A voice turn or prior text turn is still in flight — ignore
+            await self._send_json({"type": "text_error", "reason": "busy"})
+            return
+        # Also refuse if a voice call is active (ASR is running)
+        if self.asr._recognition is not None:
+            await self._send_json({"type": "text_error", "reason": "in_call"})
             return
 
         self._responding = True
@@ -132,11 +136,10 @@ class ChatSession:
                     "text": delta,
                 })
         finally:
-            if full_response:
-                await self._send_json({
-                    "type": "text_done",
-                    "text": full_response,
-                })
+            await self._send_json({
+                "type": "text_done",
+                "text": full_response,
+            })
             self._responding = False
             await self._send_status("idle")
 
